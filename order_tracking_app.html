@@ -1,0 +1,198 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Order Tracker</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap');
+        body {
+            font-family: 'Inter', sans-serif;
+            background-color: #f7fafc;
+        }
+        .container {
+            max-width: 800px;
+        }
+        .card {
+            background-color: #ffffff;
+            border-radius: 1rem;
+            box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+            padding: 2rem;
+        }
+        .input-group input {
+            border: 1px solid #e2e8f0;
+            border-radius: 0.5rem;
+            padding: 0.75rem 1rem;
+            width: 100%;
+        }
+        .btn {
+            background-color: #4a5568;
+            color: #ffffff;
+            padding: 0.75rem 1.5rem;
+            border-radius: 0.5rem;
+            cursor: pointer;
+            transition: background-color 0.2s ease-in-out;
+        }
+        .btn:hover {
+            background-color: #2d3748;
+        }
+        .tracking-status-badge {
+            padding: 0.25rem 0.75rem;
+            border-radius: 9999px;
+            font-size: 0.875rem;
+            font-weight: 500;
+        }
+        .status-delivered {
+            background-color: #2f855a;
+            color: #ffffff;
+        }
+        .status-on-the-way {
+            background-color: #d69e2e;
+            color: #ffffff;
+        }
+        .status-ready-to-ship {
+            background-color: #38a169;
+            color: #ffffff;
+        }
+    </style>
+</head>
+<body class="p-6">
+
+<div id="app" class="flex items-center justify-center min-h-screen">
+    <div class="container card">
+        <h1 class="text-3xl font-bold text-center mb-6">Track Your Order</h1>
+        <p class="text-center text-gray-600 mb-8">
+            Enter your order number and the email address used for the purchase to check your order status.
+        </p>
+
+        <form id="trackingForm" class="space-y-4">
+            <div>
+                <label for="orderNumber" class="block text-sm font-medium text-gray-700">Order Number</label>
+                <input type="text" id="orderNumber" name="orderNumber" placeholder="e.g., #11517" class="mt-1 block w-full rounded-md" required>
+            </div>
+            <div>
+                <label for="email" class="block text-sm font-medium text-gray-700">Email Address</label>
+                <input type="email" id="email" name="email" placeholder="you@example.com" class="mt-1 block w-full rounded-md" required>
+            </div>
+            <button type="submit" class="w-full btn">Track Order</button>
+        </form>
+
+        <div id="messageBox" class="mt-6 hidden">
+            <div class="p-4 rounded-lg text-sm text-center font-medium" role="alert"></div>
+        </div>
+
+        <div id="results" class="mt-8 hidden">
+            <div id="orderDetails" class="space-y-4">
+                <h2 class="text-2xl font-semibold mb-4">Order Details</h2>
+                <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div class="bg-gray-100 p-4 rounded-lg">
+                        <p class="text-sm font-medium text-gray-500">Order Number</p>
+                        <p id="resultOrderNumber" class="text-lg font-bold text-gray-900"></p>
+                    </div>
+                    <div class="bg-gray-100 p-4 rounded-lg col-span-2">
+                        <p class="text-sm font-medium text-gray-500">Shipping Address</p>
+                        <p id="resultShippingAddress" class="text-lg font-bold text-gray-900"></p>
+                    </div>
+                    <div class="bg-gray-100 p-4 rounded-lg">
+                        <p class="text-sm font-medium text-gray-500">Shipout Date</p>
+                        <p id="resultShipoutDate" class="text-lg font-bold text-gray-900"></p>
+                    </div>
+                    <div class="bg-gray-100 p-4 rounded-lg">
+                        <p class="text-sm font-medium text-gray-500">Estimated Arrival Date</p>
+                        <p id="resultEstimatedArrivalDate" class="text-lg font-bold text-gray-900"></p>
+                    </div>
+                    <div class="bg-gray-100 p-4 rounded-lg col-span-2 text-center">
+                        <p class="text-sm font-medium text-gray-500">Shipment Status</p>
+                        <p id="resultShipmentStatus" class="tracking-status-badge"></p>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+<script>
+    const form = document.getElementById('trackingForm');
+    const resultsDiv = document.getElementById('results');
+    const messageBox = document.getElementById('messageBox');
+    const messageText = messageBox.querySelector('div');
+
+    form.addEventListener('submit', async (e) => {
+        e.preventDefault();
+        
+        const orderNumber = document.getElementById('orderNumber').value.trim();
+        const email = document.getElementById('email').value.trim();
+
+        resultsDiv.classList.add('hidden');
+        messageBox.classList.add('hidden');
+        messageText.textContent = '';
+
+        if (!orderNumber || !email) {
+            showMessage('Please enter both an order number and an email address.', 'bg-red-100 text-red-700');
+            return;
+        }
+
+        showMessage('Please wait while we fetch your order details...', 'bg-blue-100 text-blue-700');
+        
+        // IMPORTANT: Replace with your actual Vercel URL
+        const BACKEND_ENDPOINT = 'https://github.com/Shiamas-server/order_tracking.git'; 
+
+        try {
+            const response = await fetch(BACKEND_ENDPOINT, {
+                method: 'POST',
+                headers: {
+                    'Content-Type': 'application/json',
+                },
+                body: JSON.stringify({ orderNumber, email }),
+            });
+
+            const data = await response.json();
+
+            if (response.ok && data.order) {
+                hideMessage();
+                displayOrder(data.order);
+                resultsDiv.classList.remove('hidden');
+            } else {
+                showMessage(data.message || 'Order not found. Please check your order number and email.', 'bg-red-100 text-red-700');
+            }
+
+        } catch (error) {
+                console.error('Error fetching data:', error);
+                showMessage('An error occurred. Please try again later.', 'bg-red-100 text-red-700');
+        }
+    });
+
+    function showMessage(text, className) {
+        messageBox.classList.remove('hidden');
+        messageText.textContent = text;
+        messageText.className = `p-4 rounded-lg text-sm text-center font-medium ${className}`;
+    }
+
+    function hideMessage() {
+        messageBox.classList.add('hidden');
+        messageText.textContent = '';
+    }
+
+    function displayOrder(order) {
+        document.getElementById('resultOrderNumber').textContent = order.orderNumber;
+        document.getElementById('resultShippingAddress').innerHTML = order.shippingAddress.replace(/\n/g, '<br>');
+        document.getElementById('resultShipoutDate').textContent = order.shipoutDate;
+        document.getElementById('resultEstimatedArrivalDate').textContent = order.estimatedArrivalDate;
+
+        const statusEl = document.getElementById('resultShipmentStatus');
+        statusEl.textContent = order.shipmentStatus;
+        statusEl.className = 'tracking-status-badge';
+
+        if (order.shipmentStatus === 'Delivered') {
+            statusEl.classList.add('status-delivered');
+        } else if (order.shipmentStatus === 'On the way') {
+            statusEl.classList.add('status-on-the-way');
+        } else if (order.shipmentStatus === 'Ready to ship') {
+            statusEl.classList.add('status-ready-to-ship');
+        }
+    }
+</script>
+
+</body>
+</html>

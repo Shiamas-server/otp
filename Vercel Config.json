@@ -1,0 +1,22 @@
+{
+  "rewrites": [
+    {
+      "source": "/api/track_order",
+      "destination": "/server.js"
+    }
+  ],
+  "headers": [
+    {
+      "source": "/(.*)",
+      "headers": [
+        {
+          "key": "Location",
+          "value": "/order_tracking_app.html"
+        }
+      ]
+    }
+  ],
+  "public": [
+    "/order_tracking_app.html"
+  ]
+}
