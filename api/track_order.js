@@ -60,7 +60,16 @@ if (order) {
   ] = order;
 
   // Add a check to ensure shippingAddress is a string before replacing newlines
-const formattedShippingAddress = shippingAddress.replace(/\n/g, '<br>');
+// --- FIX START ---
+
+// Check if shippingAddress is a truthy value (i.e., not null, undefined, or an empty string)
+// If it is, use it. If not, default to an empty string ''.
+const safeShippingAddress = shippingAddress ? shippingAddress : '';
+
+// Now you can safely call .replace() on safeShippingAddress
+const formattedShippingAddress = safeShippingAddress.replace(/\n/g, '<br>');
+
+// --- FIX END ---
 
   const formattedOrder = {
     orderNumber: orderNum,
