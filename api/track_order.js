@@ -45,29 +45,33 @@ const auth = new google.auth.GoogleAuth({
       return orderId === orderNumber && customerEmail === email;
     });
 
-    if (order) {
-      const [
-        id,
-        orderNum,
-        name,
-        customerEmail,
-        orderDate,
-        shippingAddress,
-        shipoutDate,
-        arrivalDate,
-        shipmentStatus,
-      ] = order;
 
-      const formattedOrder = {
-        orderNumber: orderNum,
-        shippingAddress: shippingAddress,
-        shipoutDate: shipoutDate,
-        estimatedArrivalDate: arrivalDate,
-        shipmentStatus: shipmentStatus,
-      };
+if (order) {
+  const [
+    id,
+    orderNum,
+    name,
+    customerEmail,
+    orderDate,
+    shippingAddress,
+    shipoutDate,
+    arrivalDate,
+    shipmentStatus,
+  ] = order;
 
-      return res.json({ order: formattedOrder });
-    } else {
+  // Add a check to ensure shippingAddress is a string before replacing newlines
+  const formattedShippingAddress = shippingAddress ? shippingAddress.replace(/\n/g, '<br>') : 'N/A';
+
+  const formattedOrder = {
+    orderNumber: orderNum,
+    shippingAddress: formattedShippingAddress, // Use the checked value
+    shipoutDate: shipoutDate,
+    estimatedArrivalDate: arrivalDate,
+    shipmentStatus: shipmentStatus,
+  };
+
+  return res.json({ order: formattedOrder });
+} else {
       return res.status(404).json({
         message: "Order not found. Please check your order number and email.",
       });
