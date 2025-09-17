@@ -60,7 +60,7 @@ if (order) {
   ] = order;
 
   // Add a check to ensure shippingAddress is a string before replacing newlines
-  const formattedShippingAddress = shippingAddress ? shippingAddress.replace(/\n/g, '<br>') : 'N/A';
+const formattedShippingAddress = shippingAddress.replace(/\n/g, '<br>');
 
   const formattedOrder = {
     orderNumber: orderNum,
